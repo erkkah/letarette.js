@@ -1,0 +1,30 @@
+{
+  "name": "letarette.js",
+  "version": "0.1.0",
+  "description": "Letarette javascript / typescript client",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/**/*"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "lint": "tslint -p tsconfig.json"
+  },
+  "keywords": [
+    "letarette",
+    "typescript",
+    "search",
+    "client"
+  ],
+  "author": "Erik Agsjö",
+  "license": "ISC",
+  "devDependencies": {
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.2"
+  },
+  "dependencies": {
+    "nats": "^1.3.2"
+  }
+}
