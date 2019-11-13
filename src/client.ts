@@ -1,25 +1,40 @@
 import * as NATS from "nats";
-import { SearchRequest, SearchResponse } from "./protocol";
+
+import { Monitor } from "./monitor";
+import { IndexStatus, SearchRequest, SearchResponse } from "./protocol";
 
 export class SearchClient {
     private client: NATS.Client | null = null;
+    private readonly monitor: Monitor;
     private readonly url: string;
     private readonly topic: string;
+    private numShards = 0;
 
-    public constructor(url: string, topic: string = "leta") {
+    public constructor(url: string, topic: string = "leta", shardGroupSize?: number) {
         this.url = url;
         this.topic = topic;
+        if (shardGroupSize) {
+            this.numShards = shardGroupSize;
+        }
+        this.monitor = new Monitor(url, topic);
+        this.monitor.on("status", (status: IndexStatus) => {
+            this.numShards = status.ShardgroupSize;
+        });
     }
 
-    public connect(): Promise<SearchClient> {
-        return new Promise<SearchClient>((resolve, reject) => {
+    public async connect() {
+        return new Promise((resolve, reject) => {
             this.client = NATS.connect({
                 json: true,
                 url: this.url,
                 verbose: true,
             });
             this.client.on("connect", () => {
-                resolve(this);
+                if (this.numShards === 0) {
+                    resolve(this.monitor.connect());
+                } else {
+                    resolve();
+                }
             });
             this.client.on("error", (err) => {
                 reject(err);
@@ -38,8 +53,6 @@ export class SearchClient {
             throw new Error("Must be connected");
         }
 
-        const numShards = 1;
-
         const req: SearchRequest = {
             Query: query,
             Spaces: spaces,
@@ -47,26 +60,25 @@ export class SearchClient {
             PageOffset: pageOffset,
         };
 
-        const request = new Promise<SearchResponse[]>((resolve, reject) => {
+        const request = new Promise<SearchResponse[]>(async (resolve, reject) => {
             let subscription: number;
 
-            /*
             const timeout = setTimeout(() => {
                 this.client!.unsubscribe(subscription);
                 reject("Timeout waiting for search response");
             }, 2000);
-            */
 
+            const shards = await this.getNumShards();
             const inbox = this.client!.createInbox();
             const responses: SearchResponse[] = [];
-            subscription = this.client!.subscribe(inbox, {max: numShards}, (res: SearchResponse) => {
+            subscription = this.client!.subscribe(inbox, {max: shards}, (res: SearchResponse) => {
                 responses.push(res);
-                if (responses.length === numShards) {
-                    // clearTimeout(timeout);
+                if (responses.length === shards) {
+                    clearTimeout(timeout);
                     resolve(responses);
                 }
             });
-            this.client!.unsubscribe(subscription, numShards);
+            this.client!.unsubscribe(subscription, shards);
             this.client!.publish(this.topic + ".q", req, inbox);
         });
 
@@ -79,6 +91,21 @@ export class SearchClient {
         if (this.client) {
             this.client.close();
         }
+        this.monitor.close();
+    }
+
+    private async getNumShards(): Promise<number> {
+        if (this.numShards !== 0) {
+            return this.numShards;
+        }
+        return new Promise<number>((resolve, reject) => {
+            const interval = setInterval(() => {
+                if (this.numShards !== 0) {
+                    clearInterval(interval);
+                    resolve(this.numShards);
+                }
+            }, 100);
+        });
     }
 }
 
