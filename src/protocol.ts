@@ -108,7 +108,7 @@ export interface SearchResult {
 }
 
 // Codes returned in search responses
-enum SearchStatusCode {
+export enum SearchStatusCode {
     NoHit = 42,
     CacheHit,
     IndexHit,

@@ -3,6 +3,9 @@ import * as NATS from "nats";
 import { Monitor } from "./monitor";
 import { IndexStatus, SearchRequest, SearchResponse } from "./protocol";
 
+/**
+ * A Letarette search cluster client.
+ */
 export class SearchClient {
     private client: NATS.Client | null = null;
     private readonly monitor: Monitor;
@@ -109,7 +112,7 @@ export class SearchClient {
     }
 }
 
-function mergeResponses(responses: SearchResponse[]): SearchResponse {
+export function mergeResponses(responses: SearchResponse[]): SearchResponse {
     const merged: SearchResponse = {
         Result: {
             Hits: [],
