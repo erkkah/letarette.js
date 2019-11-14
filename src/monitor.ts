@@ -1,8 +1,9 @@
-import * as events from "events";
+import {EventEmitter} from "events";
+
 import * as NATS from "nats";
 import {IndexStatus} from "./protocol";
 
-export class Monitor extends events.EventEmitter {
+export class Monitor extends EventEmitter {
     private client: NATS.Client | null = null;
     private url: string;
     private topic: string;
@@ -20,14 +21,22 @@ export class Monitor extends events.EventEmitter {
                 url: this.url,
                 verbose: true,
             });
-            this.client.on("connect", (c: NATS.Client) => {
+
+            const connectionRejector = (err: any) => {
+                reject(err);
+            };
+
+            this.client.once("error", connectionRejector);
+
+            this.client.once("connect", (c: NATS.Client) => {
+                c.off("error", connectionRejector);
+                c.on("error", (err: any) => {
+                    this.emit("error", err);
+                });
                 c.subscribe(this.topic + ".status", (status: IndexStatus) => {
                     this.emit("status", status);
                 });
                 resolve();
-            });
-            this.client.on("error", (err) => {
-                reject(err);
             });
         });
     }

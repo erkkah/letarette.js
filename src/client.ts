@@ -1,3 +1,5 @@
+import {EventEmitter} from "events";
+
 import * as NATS from "nats";
 
 import { Monitor } from "./monitor";
@@ -6,7 +8,7 @@ import { IndexStatus, SearchRequest, SearchResponse } from "./protocol";
 /**
  * A Letarette search cluster client.
  */
-export class SearchClient {
+export class SearchClient extends EventEmitter {
     private client: NATS.Client | null = null;
     private readonly monitor: Monitor;
     private readonly url: string;
@@ -14,6 +16,7 @@ export class SearchClient {
     private numShards = 0;
 
     public constructor(url: string, topic: string = "leta", shardGroupSize?: number) {
+        super();
         this.url = url;
         this.topic = topic;
         if (shardGroupSize) {
@@ -30,17 +33,32 @@ export class SearchClient {
             this.client = NATS.connect({
                 json: true,
                 url: this.url,
-                verbose: true,
+                reconnectTimeWait: 250,
             });
-            this.client.on("connect", () => {
+
+            const connectionRejector = (err: any) => {
+                reject(err);
+            };
+
+            this.client.once("error", connectionRejector);
+
+            this.client.once("connect", async (c: NATS.Client) => {
+                c.off("error", connectionRejector);
+                c.on("error", (err) => {
+                    this.emit("error", err);
+                });
                 if (this.numShards === 0) {
                     resolve(this.monitor.connect());
                 } else {
                     resolve();
                 }
             });
-            this.client.on("error", (err) => {
-                reject(err);
+
+            this.client.on("disconnect", () => {
+                console.log("disconnected");
+            });
+            this.client.on("reconnect", () => {
+                console.log("reconnecting");
             });
         });
     }

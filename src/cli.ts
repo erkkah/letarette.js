@@ -8,9 +8,10 @@ const searchClient = new SearchClient("nats://localhost:4222");
         await searchClient.connect();
         const result = await searchClient.search("cat", ["wp"], 10, 0);
         showResponse(result);
-        searchClient.close();
     } catch (err) {
         console.log(err);
+    } finally {
+        searchClient.close();
     }
 })();
 
