@@ -1,0 +1,10 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "description": "letarette.js example project",
+  "author": "Erik Agsjö",
+  "license": "ISC",
+  "dependencies": {
+    "letarette": "file:.."
+  }
+}
