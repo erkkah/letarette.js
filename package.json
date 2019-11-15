@@ -1,5 +1,5 @@
 {
-  "name": "letarette.js",
+  "name": "letarette",
   "version": "0.1.0",
   "description": "Letarette javascript / typescript client",
   "main": "lib/index.js",
