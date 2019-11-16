@@ -1,6 +1,10 @@
 import { createInterface } from "readline";
 
-import { SearchClient, SearchResponse, searchStatusCodeToString } from "letarette";
+import {
+    SearchClient,
+    SearchResponse,
+    searchStatusCodeToString,
+} from "letarette";
 
 const searchClient = new SearchClient("nats://localhost:4222");
 

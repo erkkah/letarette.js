@@ -6,5 +6,10 @@
   "license": "ISC",
   "dependencies": {
     "letarette": "file:.."
+  },
+  "devDependencies": {
+    "@types/node": "^12.12.8",
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.2"
   }
 }
