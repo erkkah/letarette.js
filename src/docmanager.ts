@@ -57,6 +57,7 @@ export class DocumentManager extends EventEmitter {
         this.client.subscribe(
             this.topic + ".index.request",
             (req: IndexUpdateRequest, reply: string) => {
+                req.FromTime = new Date(req.FromTime);
                 const update = handler(req);
                 this.client!.publish(reply, update);
             },
