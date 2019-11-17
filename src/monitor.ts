@@ -3,6 +3,7 @@ import {EventEmitter} from "events";
 import * as NATS from "nats";
 import {IndexStatus} from "./protocol";
 
+// Monitor listens to status broadcasts from a letarette cluster
 export class Monitor extends EventEmitter {
     private client: NATS.Client | null = null;
     private url: string;

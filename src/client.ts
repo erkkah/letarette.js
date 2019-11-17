@@ -5,9 +5,7 @@ import * as NATS from "nats";
 import { Monitor } from "./monitor";
 import { IndexStatus, SearchRequest, SearchResponse } from "./protocol";
 
-/**
- * A Letarette search cluster client.
- */
+// A Letarette search client
 export class SearchClient extends EventEmitter {
     private client: NATS.Client | null = null;
     private readonly monitor: Monitor;

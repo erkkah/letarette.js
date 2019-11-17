@@ -3,11 +3,17 @@ import {EventEmitter} from "events";
 import * as NATS from "nats";
 import {DocumentRequest, DocumentUpdate, IndexUpdate, IndexUpdateRequest} from "./protocol";
 
+// IndexRequestHandler processes index update requests from the letarette cluster
+// and returns index updates.
 export type IndexRequestHandler = (req: IndexUpdateRequest) => IndexUpdate;
+
+// DocumentRequestHandler processes document requests from the letarette cluster
+// and returns document updates.
 export type DocumentRequestHandler = (req: DocumentRequest) => DocumentUpdate;
 
 const MAX_PAYLOAD = 1000 * 1000;
 
+// DocumentManager connects to the letarette cluster and processes indexing requests
 export class DocumentManager extends EventEmitter {
     private client: NATS.Client | null = null;
     private url: string;
