@@ -24,7 +24,9 @@ export class DocumentManager extends EventEmitter {
             this.client = NATS.connect({
                 json: true,
                 url: this.url,
-                reconnectTimeWait: 250,
+                reconnect: true,
+                reconnectTimeWait: 500,
+                maxReconnectAttempts: -1,
             });
 
             const connectionRejector = (err: any) => {
@@ -39,6 +41,13 @@ export class DocumentManager extends EventEmitter {
                     this.emit("error", err);
                 });
                 resolve();
+            });
+
+            this.client.on("disconnect", () => {
+                this.emit("disconnect");
+            });
+            this.client.on("reconnect", () => {
+                this.emit("reconnect");
             });
         });
     }

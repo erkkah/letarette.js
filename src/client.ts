@@ -33,7 +33,9 @@ export class SearchClient extends EventEmitter {
             this.client = NATS.connect({
                 json: true,
                 url: this.url,
-                reconnectTimeWait: 250,
+                reconnect: true,
+                reconnectTimeWait: 500,
+                maxReconnectAttempts: -1,
             });
 
             const connectionRejector = (err: any) => {
@@ -55,10 +57,10 @@ export class SearchClient extends EventEmitter {
             });
 
             this.client.on("disconnect", () => {
-                console.log("disconnected");
+                this.emit("disconnect");
             });
             this.client.on("reconnect", () => {
-                console.log("reconnecting");
+                this.emit("reconnect");
             });
         });
     }

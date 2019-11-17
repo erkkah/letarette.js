@@ -19,7 +19,9 @@ export class Monitor extends EventEmitter {
             this.client = NATS.connect({
                 json: true,
                 url: this.url,
-                verbose: true,
+                reconnect: true,
+                reconnectTimeWait: 500,
+                maxReconnectAttempts: -1,
             });
 
             const connectionRejector = (err: any) => {
@@ -37,6 +39,13 @@ export class Monitor extends EventEmitter {
                     this.emit("status", status);
                 });
                 resolve();
+            });
+
+            this.client.on("disconnect", () => {
+                this.emit("disconnect");
+            });
+            this.client.on("reconnect", () => {
+                this.emit("reconnect");
             });
         });
     }

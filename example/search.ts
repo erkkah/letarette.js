@@ -7,6 +7,9 @@ import {
 } from "letarette";
 
 const searchClient = new SearchClient("nats://localhost:4222");
+searchClient.on("error", (err) => {
+    console.log(err);
+});
 
 (async () => {
     try {
