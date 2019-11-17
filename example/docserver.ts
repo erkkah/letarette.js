@@ -165,11 +165,16 @@ function fetchInitial(limit: number): DocumentReference[] {
 }
 
 function fetchByTime(startTime: Date, limit: number): DocumentReference[] {
+    const result: DocumentReference[] = [];
+
     const startIndex = index.findIndex((v, i) => {
         return recipies[v].date.getTime() >= startTime.getTime();
     });
 
-    const result: DocumentReference[] = [];
+    if (startIndex === -1) {
+        return result;
+    }
+
     for (let i = startIndex; i < startIndex + limit; i++) {
         if (i >= index.length) {
             break;
