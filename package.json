@@ -30,6 +30,6 @@
     "typescript": "^3.7.2"
   },
   "dependencies": {
-    "nats": "^1.3.2"
+    "ts-nats": "^1.2.4"
   }
 }

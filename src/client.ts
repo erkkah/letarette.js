@@ -1,13 +1,13 @@
 import {EventEmitter} from "events";
 
-import * as NATS from "nats";
+import { Client, connect, Payload, Subscription } from "ts-nats";
 
 import { Monitor } from "./monitor";
 import { IndexStatus, SearchRequest, SearchResponse } from "./protocol";
 
 // A Letarette search client
 export class SearchClient extends EventEmitter {
-    private client: NATS.Client | null = null;
+    private client: Client | null = null;
     private readonly monitor: Monitor;
     private readonly url: string;
     private readonly topic: string;
@@ -27,40 +27,17 @@ export class SearchClient extends EventEmitter {
     }
 
     public async connect() {
-        return new Promise((resolve, reject) => {
-            this.client = NATS.connect({
-                json: true,
-                url: this.url,
-                reconnect: true,
-                reconnectTimeWait: 500,
-                maxReconnectAttempts: -1,
-            });
-
-            const connectionRejector = (err: any) => {
-                reject(err);
-            };
-
-            this.client.once("error", connectionRejector);
-
-            this.client.once("connect", async (c: NATS.Client) => {
-                c.off("error", connectionRejector);
-                c.on("error", (err) => {
-                    this.emit("error", err);
-                });
-                if (this.numShards === 0) {
-                    resolve(this.monitor.connect());
-                } else {
-                    resolve();
-                }
-            });
-
-            this.client.on("disconnect", () => {
-                this.emit("disconnect");
-            });
-            this.client.on("reconnect", () => {
-                this.emit("reconnect");
-            });
+        this.client = await connect({
+            payload: Payload.JSON,
+            url: this.url,
+            reconnect: true,
+            reconnectTimeWait: 500,
+            maxReconnectAttempts: -1,
         });
+
+        if (this.numShards === 0) {
+            await this.monitor.connect();
+        }
     }
 
     public async search(
@@ -82,24 +59,30 @@ export class SearchClient extends EventEmitter {
         };
 
         const request = new Promise<SearchResponse[]>(async (resolve, reject) => {
-            let subscription: number;
+            let subscription: Subscription;
 
             const timeout = setTimeout(() => {
-                this.client!.unsubscribe(subscription);
+                if (subscription) {
+                    subscription.unsubscribe();
+                }
                 reject("Timeout waiting for search response");
             }, 2000);
 
             const shards = await this.getNumShards();
             const inbox = this.client!.createInbox();
             const responses: SearchResponse[] = [];
-            subscription = this.client!.subscribe(inbox, {max: shards}, (res: SearchResponse) => {
+            subscription = await this.client!.subscribe(inbox, (err, msg) => {
+                if (err) {
+                    reject(err);
+                }
+                const res: SearchResponse = msg.data;
                 responses.push(res);
                 if (responses.length === shards) {
                     clearTimeout(timeout);
                     resolve(responses);
                 }
-            });
-            this.client!.unsubscribe(subscription, shards);
+            }, {max: shards});
+            subscription.unsubscribe(shards);
             this.client!.publish(this.topic + ".q", req, inbox);
         });
 

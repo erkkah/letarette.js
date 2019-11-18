@@ -1,6 +1,6 @@
 import {EventEmitter} from "events";
 
-import * as NATS from "nats";
+import {Client, connect, Payload} from "ts-nats";
 import {DocumentRequest, DocumentUpdate, IndexUpdate, IndexUpdateRequest} from "./protocol";
 
 // IndexRequestHandler processes index update requests from the letarette cluster
@@ -15,7 +15,7 @@ const MAX_PAYLOAD = 1000 * 1000;
 
 // DocumentManager connects to the letarette cluster and processes indexing requests
 export class DocumentManager extends EventEmitter {
-    private client: NATS.Client | null = null;
+    private client: Client | null = null;
     private url: string;
     private topic: string;
 
@@ -26,35 +26,12 @@ export class DocumentManager extends EventEmitter {
     }
 
     public async connect() {
-        return new Promise((resolve, reject) => {
-            this.client = NATS.connect({
-                json: true,
-                url: this.url,
-                reconnect: true,
-                reconnectTimeWait: 500,
-                maxReconnectAttempts: -1,
-            });
-
-            const connectionRejector = (err: any) => {
-                reject(err);
-            };
-
-            this.client.once("error", connectionRejector);
-
-            this.client.once("connect", async (c: NATS.Client) => {
-                c.off("error", connectionRejector);
-                c.on("error", (err) => {
-                    this.emit("error", err);
-                });
-                resolve();
-            });
-
-            this.client.on("disconnect", () => {
-                this.emit("disconnect");
-            });
-            this.client.on("reconnect", () => {
-                this.emit("reconnect");
-            });
+        this.client = await connect({
+            payload: Payload.JSON,
+            url: this.url,
+            reconnect: true,
+            reconnectTimeWait: 500,
+            maxReconnectAttempts: -1,
         });
     }
 
@@ -64,14 +41,16 @@ export class DocumentManager extends EventEmitter {
         }
     }
 
-    public startIndexRequestHandler(handler: IndexRequestHandler) {
+    public async startIndexRequestHandler(handler: IndexRequestHandler) {
         if (!this.client) {
             throw new Error("Must be connected");
         }
 
-        this.client.subscribe(
+        return this.client.subscribe(
             this.topic + ".index.request",
-            (req: IndexUpdateRequest, reply: string) => {
+            (err, msg) => {
+                const req: IndexUpdateRequest = msg.data;
+                const reply = msg.reply!;
                 req.FromTime = new Date(req.FromTime);
                 const update = handler(req);
                 this.client!.publish(reply, update);
@@ -79,52 +58,53 @@ export class DocumentManager extends EventEmitter {
         );
     }
 
-    public startDocumentRequestHandler(handler: DocumentRequestHandler) {
+    public async startDocumentRequestHandler(handler: DocumentRequestHandler) {
         if (!this.client) {
             throw new Error("Must be connected");
         }
 
-        this.client.subscribe(
-            this.topic + ".document.request",
-            (req: DocumentRequest) => {
-                const update = handler(req);
-                const updates: DocumentUpdate[] = [update];
+        const handle = (req: DocumentRequest) => {
+            const update = handler(req);
+            const updates: DocumentUpdate[] = [update];
 
-                while (updates.length > 0) {
-                    const current = updates.pop()!;
-                    const jsonMessage = JSON.stringify(current);
-                    const messageBuffer = new Buffer(jsonMessage);
+            while (updates.length > 0) {
+                const current = updates.pop()!;
+                const jsonMessage = JSON.stringify(current);
+                const messageBuffer = Buffer.from(jsonMessage);
 
-                    // The server disconnects if the message is too large.
-                    // The 1024 is just to leave room for the protocol part.
-                    if (messageBuffer.length > (MAX_PAYLOAD - 1024)) {
-                        const length = current.Documents.length;
-                        if (length > 1) {
-                            const mid = length / 2;
-                            updates.push({
-                                Space: current.Space,
-                                Documents: current.Documents.slice(0, mid),
-                            },
-                            {
-                                Space: current.Space,
-                                Documents: current.Documents.slice(mid),
-                            });
-                            this.emit("warning", "Document list too large, splitting");
-                        } else {
-                            const doc = current.Documents[0];
-                            doc.Text = truncateString(doc.Text, MAX_PAYLOAD / 2);
-                            updates.push({
-                                Space: current.Space,
-                                Documents: [doc],
-                            });
-                            this.emit("warning", `Document ${doc.ID} too large, truncating`);
-                        }
-                    } else {
-                        this.client!.publish(this.topic + ".document.update", messageBuffer, (err: any) =>  {
-                            this.emit(err);
+                // The server disconnects if the message is too large.
+                // The 1024 is just to leave room for the protocol part.
+                if (messageBuffer.length > (MAX_PAYLOAD - 1024)) {
+                    const length = current.Documents.length;
+                    if (length > 1) {
+                        const mid = length / 2;
+                        updates.push({
+                            Space: current.Space,
+                            Documents: current.Documents.slice(0, mid),
+                        },
+                        {
+                            Space: current.Space,
+                            Documents: current.Documents.slice(mid),
                         });
+                        this.emit("warning", "Document list too large, splitting");
+                    } else {
+                        const doc = current.Documents[0];
+                        doc.Text = truncateString(doc.Text, MAX_PAYLOAD / 2);
+                        updates.push({
+                            Space: current.Space,
+                            Documents: [doc],
+                        });
+                        this.emit("warning", `Document ${doc.ID} too large, truncating`);
                     }
+                } else {
+                    this.client!.publish(this.topic + ".document.update", current);
                 }
+            }
+        };
+
+        return this.client.subscribe(this.topic + ".document.request",
+            (err, msg) => {
+                handle(msg.data);
             },
         );
     }

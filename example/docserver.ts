@@ -111,6 +111,7 @@ function loadRecipies(path: string): RecipeMap {
 
     let month = "";
     let parsingRecipe = false;
+    let recipeLines: string[] = [];
 
     for (const line of lines) {
         const atEnd =  line.startsWith("*** END OF THIS PROJECT");
@@ -118,6 +119,7 @@ function loadRecipies(path: string): RecipeMap {
         const monthMatch = line.match(/^([A-Z]{3,})\.$/);
         if (monthMatch) {
             month = monthMatch[1];
+            continue;
         }
 
         if (month === "") {
@@ -128,13 +130,14 @@ function loadRecipies(path: string): RecipeMap {
 
         if (parsingRecipe) {
             if (titleMatch || atEnd) {
+                currentRecipe.text = recipeLines.join(" ");
                 result[currentID] = {
                     ...currentRecipe,
                 };
-                currentRecipe.text = "";
+                recipeLines = [];
                 parsingRecipe = false;
             } else {
-                currentRecipe.text += " " + line;
+                recipeLines.push(line);
             }
         }
 

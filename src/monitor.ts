@@ -1,11 +1,11 @@
 import {EventEmitter} from "events";
 
-import * as NATS from "nats";
+import {Client, connect, Payload} from "ts-nats";
 import {IndexStatus} from "./protocol";
 
 // Monitor listens to status broadcasts from a letarette cluster
 export class Monitor extends EventEmitter {
-    private client: NATS.Client | null = null;
+    private client: Client | null = null;
     private url: string;
     private topic: string;
 
@@ -16,38 +16,17 @@ export class Monitor extends EventEmitter {
     }
 
     public async connect() {
-        return new Promise((resolve, reject) => {
-            this.client = NATS.connect({
-                json: true,
-                url: this.url,
-                reconnect: true,
-                reconnectTimeWait: 500,
-                maxReconnectAttempts: -1,
-            });
+        this.client = await connect({
+            payload: Payload.JSON,
+            url: this.url,
+            reconnect: true,
+            reconnectTimeWait: 500,
+            maxReconnectAttempts: -1,
+        });
 
-            const connectionRejector = (err: any) => {
-                reject(err);
-            };
-
-            this.client.once("error", connectionRejector);
-
-            this.client.once("connect", (c: NATS.Client) => {
-                c.off("error", connectionRejector);
-                c.on("error", (err: any) => {
-                    this.emit("error", err);
-                });
-                c.subscribe(this.topic + ".status", (status: IndexStatus) => {
-                    this.emit("status", status);
-                });
-                resolve();
-            });
-
-            this.client.on("disconnect", () => {
-                this.emit("disconnect");
-            });
-            this.client.on("reconnect", () => {
-                this.emit("reconnect");
-            });
+        this.client.subscribe(this.topic + ".status", (err, msg) => {
+            const status: IndexStatus = msg.data;
+            this.emit("status", status);
         });
     }
 
