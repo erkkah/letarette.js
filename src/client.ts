@@ -56,6 +56,7 @@ export class SearchClient extends EventEmitter {
             Spaces: spaces,
             PageLimit: pageLimit,
             PageOffset: pageOffset,
+            Autocorrect: false,
         };
 
         const request = new Promise<SearchResponse[]>(async (resolve, reject) => {
@@ -119,6 +120,8 @@ export function mergeResponses(responses: SearchResponse[]): SearchResponse {
             Hits: [],
             Capped: false,
             TotalHits: 0,
+            Respelt: "",
+            RespeltDistance: 0.0,
         },
         Status: 0,
         Duration: 0,
@@ -135,6 +138,11 @@ export function mergeResponses(responses: SearchResponse[]): SearchResponse {
         merged.Result.TotalHits += response.Result.TotalHits;
         if (response.Result.Hits) {
             merged.Result.Hits.push(...response.Result.Hits);
+        }
+        if (merged.Result.Respelt === "" ||
+            (response.Result.RespeltDistance > 0 && merged.Result.RespeltDistance > response.Result.RespeltDistance)) {
+            merged.Result.Respelt = response.Result.Respelt;
+            merged.Result.RespeltDistance = response.Result.RespeltDistance;
         }
     }
     merged.Result.Hits = merged.Result.Hits.sort((a, b) => {

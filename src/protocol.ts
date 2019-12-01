@@ -1,12 +1,15 @@
 // DocumentID is just a string, could be uuid, hash, numeric, et.c.
 export type DocumentID = string;
 
+export const version = "0.5.0";
+
 // Codes returned in index status updates
 export enum IndexStatusCode {
     InSync = 72,
     StartingUp,
     Syncing,
     IncompleteShardgroup,
+    IndexStatusIncompatible,
 }
 
 export function indexStatusCodeToString(code: IndexStatusCode): string {
@@ -19,6 +22,8 @@ export function indexStatusCodeToString(code: IndexStatusCode): string {
             return "syncing";
         case IndexStatusCode.IncompleteShardgroup:
             return "incomplete shard group";
+        case IndexStatusCode.IndexStatusIncompatible:
+            return "incompatible protocol versions";
         default:
             return `unknown (${code})`;
     }
@@ -27,9 +32,11 @@ export function indexStatusCodeToString(code: IndexStatusCode): string {
 // IndexStatus is regularly broadcast from all workers
 export interface IndexStatus {
     IndexID: string;
+    Version: string;
     DocCount: number;
     LastUpdate: Date;
     ShardgroupSize: number;
+    Shardgroup: number;
     Status: IndexStatusCode;
 }
 
@@ -88,6 +95,11 @@ export interface SearchRequest {
     PageLimit: number;
     // Zero-indexed page of hits to retrieve
     PageOffset: number;
+    // When true, spelling mistakes are "fixed"
+    // and the resulting query is automatically performed.
+    // In either case, spell-fixed queries are returned
+    // in the SearchResult Respelt field.
+    Autocorrect: boolean;
 }
 
 // SearchHit represents one search hit
@@ -99,11 +111,17 @@ export interface SearchHit {
 }
 
 // SearchResult is a collection of search hits.
-// When Capped is true, the search was truncated at Config.Search.Cap.
-// Capped results are only locally sorted by rank.
 export interface SearchResult {
     Hits: SearchHit[];
+    // When true, the search was truncated
+    // Capped results are only locally sorted by rank
     Capped: boolean;
+    // When not empty, the original query had no matches,
+    // and this is a respelt version of the query
+    Respelt: string;
+    // The summed Levenshtein distance for all respelt terms
+    RespeltDistance: number;
+    // The total number of hits to the given query
     TotalHits: number;
 }
 

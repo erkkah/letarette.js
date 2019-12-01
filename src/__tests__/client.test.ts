@@ -21,6 +21,8 @@ describe("Search result merging", () => {
                 },
             ],
             TotalHits: 12,
+            Respelt: "",
+            RespeltDistance: 0,
             Capped: true,
         },
     };
@@ -43,6 +45,8 @@ describe("Search result merging", () => {
                     Space: "test",
                 },
             ],
+            Respelt: "",
+            RespeltDistance: 0,
             TotalHits: 34,
             Capped: false,
         },
