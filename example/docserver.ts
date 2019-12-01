@@ -1,4 +1,5 @@
-import { readFileSync } from "fs";
+
+import {loadRecipies} from "./recipies";
 
 import {
     Document,
@@ -9,16 +10,6 @@ import {
     IndexUpdate,
     IndexUpdateRequest,
 } from "letarette";
-
-interface Recipe {
-    title: string;
-    text: string;
-    date: Date;
-}
-
-interface RecipeMap {
-    [day: string]: Recipe;
-}
 
 const recipies = loadRecipies("pg24384.txt");
 let index = Object.keys(recipies);
@@ -95,65 +86,6 @@ function handleDocumentRequest(req: DocumentRequest): DocumentUpdate {
         Space: "docs",
         Documents: result,
     };
-}
-
-function loadRecipies(path: string): RecipeMap {
-    const bookFile = readFileSync(path);
-    const lines = bookFile.toString().split(/[\n\r]+/);
-
-    const result: RecipeMap = {};
-    let currentID = "";
-    const currentRecipe: Recipe = {
-        title: "",
-        text: "",
-        date: new Date(),
-    };
-
-    let month = "";
-    let parsingRecipe = false;
-    let recipeLines: string[] = [];
-
-    for (const line of lines) {
-        const atEnd =  line.startsWith("*** END OF THIS PROJECT");
-
-        const monthMatch = line.match(/^([A-Z]{3,})\.$/);
-        if (monthMatch) {
-            month = monthMatch[1];
-            continue;
-        }
-
-        if (month === "") {
-            continue;
-        }
-
-        const titleMatch = line.match(/^(\d{1,2})\.?--(.*)/);
-
-        if (parsingRecipe) {
-            if (titleMatch || atEnd) {
-                currentRecipe.text = recipeLines.join(" ");
-                result[currentID] = {
-                    ...currentRecipe,
-                };
-                recipeLines = [];
-                parsingRecipe = false;
-            } else {
-                recipeLines.push(line);
-            }
-        }
-
-        if (atEnd) {
-            break;
-        }
-
-        if (titleMatch) {
-            const day = titleMatch[1];
-            currentID = `${month}-${day}`;
-            currentRecipe.title = titleMatch[2];
-            parsingRecipe = true;
-        }
-    }
-
-    return result;
 }
 
 function fetchInitial(limit: number): DocumentReference[] {
