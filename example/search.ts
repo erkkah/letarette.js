@@ -1,19 +1,19 @@
 import { createInterface } from "readline";
 
 import {
-    SearchClient,
+    SearchAgent,
     SearchResponse,
     searchStatusCodeToString,
 } from "letarette";
 
-const searchClient = new SearchClient("nats://localhost:4222");
-searchClient.on("error", (err) => {
+const searchAgent = new SearchAgent("nats://localhost:4222");
+searchAgent.on("error", (err) => {
     console.log(err);
 });
 
 (async () => {
     try {
-        await searchClient.connect();
+        await searchAgent.connect();
         const term = createInterface({
             input: process.stdin,
             output: process.stdout,
@@ -22,7 +22,7 @@ searchClient.on("error", (err) => {
         term.prompt();
 
         term.on("line", async (line) => {
-            searchClient.search(line, ["docs"], 10, 0)
+            searchAgent.search(line, ["docs"], 10, 0)
             .then((result) => {
                 showResponse(result);
             })
@@ -35,7 +35,7 @@ searchClient.on("error", (err) => {
         });
 
         term.on("close", () => {
-            searchClient.close();
+            searchAgent.close();
             process.exit(0);
         });
 

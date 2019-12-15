@@ -1,13 +1,12 @@
 # letarette.js example project
 
-An example project using the search client and document manager components.
+An example project using the Search Agent and Document Manager components.
 
-## Search client
-The search client connects to a Letarette cluster, reads queries from stdin
-and searches the default "docs" space.
+## Search Agent
+The search client example uses the Search Agent to connect to a Letarette cluster, then reads queries from stdin and searches the default "docs" space.
 
-## Document manager
-The document manager implementation presents 365 recipies from the great book
+## Document Manager
+The Document Manager example presents 365 recipies from the great book
 "365 Luncheon Dishes - A Luncheon Dish for Every Day in the Year" to the
 cluster, where each recipe becomes a document in the "docs" space.
 
@@ -21,8 +20,9 @@ and `npm run build` the the root directory. Then move down to the `example`
 directory and run `npm install` to install the newly built library.
 
 ## Running the example
-With a NATS server running at the local machine, and a letarette server
-up and running, launch the search client using `npx ts-node search.ts`.
+The example requires a NATS server and a Letarette server up and running.
+The NATS server is expected to run on the local machine (nats://localhost:4222).
 
-If you want to search "365 Luncheon Dishes", launch the document server
-first, using `npx ts-node docserver.ts`.
+Launch the document server first, using `npx ts-node docserver.ts`. This will start to feed the Letarette index with "365 Luncheon Dishes".
+
+Now, launch the search client using `npx ts-node search.ts` and type in your best lunch-related queries.

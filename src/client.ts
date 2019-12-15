@@ -5,8 +5,8 @@ import { Client, connect, Payload, Subscription } from "ts-nats";
 import { Monitor } from "./monitor";
 import { IndexStatus, SearchRequest, SearchResponse } from "./protocol";
 
-// A Letarette search client
-export class SearchClient extends EventEmitter {
+// A Letarette Search Agent
+export class SearchAgent extends EventEmitter {
     private client: Client | null = null;
     private readonly monitor: Monitor;
     private readonly url: string;
