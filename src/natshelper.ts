@@ -1,7 +1,7 @@
 import { readFile } from "fs";
 import { promisify } from "util";
 
-import {Client, connect as natsConnect, NatsConnectionOptions, Payload} from "ts-nats";
+import {Client, connect as natsConnect, NatsConnectionOptions, Payload, ServerInfo} from "ts-nats";
 
 export interface NATSOptions {
     topic: string;
@@ -29,5 +29,16 @@ export async function connect(URLs: string[], options: NATSOptions): Promise<Cli
             ca: loadedCAs,
         };
     }
-    return natsConnect(connectionOptions);
+
+    const client = await natsConnect(connectionOptions);
+    client.on("connect", (c: Client, URL: string, serverInfo: ServerInfo) => {
+        const cAsAny = c as any;
+        cAsAny.maxPayload = serverInfo.max_payload;
+    });
+    return client;
+}
+
+export function getMaxPayload(client: Client) {
+    const cAsAny = client as any;
+    return cAsAny.maxPayload || 0;
 }

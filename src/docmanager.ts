@@ -2,7 +2,7 @@ import {EventEmitter} from "events";
 
 import {Client} from "ts-nats";
 
-import {connect, NATSOptions} from "./natshelper";
+import {connect, getMaxPayload, NATSOptions} from "./natshelper";
 import {DocumentRequest, DocumentUpdate, IndexUpdate, IndexUpdateRequest} from "./protocol";
 
 // IndexRequestHandler processes index update requests from the letarette cluster
@@ -12,8 +12,6 @@ export type IndexRequestHandler = (req: IndexUpdateRequest) => IndexUpdate;
 // DocumentRequestHandler processes document requests from the letarette cluster
 // and returns document updates.
 export type DocumentRequestHandler = (req: DocumentRequest) => DocumentUpdate;
-
-const MAX_PAYLOAD = 1000 * 1000;
 
 // DocumentManager connects to the letarette cluster and processes indexing requests
 export class DocumentManager extends EventEmitter {
@@ -60,6 +58,7 @@ export class DocumentManager extends EventEmitter {
         }
 
         const handle = (req: DocumentRequest) => {
+            const maxPayload = getMaxPayload(this.client!);
             const update = handler(req);
             const updates: DocumentUpdate[] = [update];
 
@@ -70,7 +69,7 @@ export class DocumentManager extends EventEmitter {
 
                 // The server disconnects if the message is too large.
                 // The 1024 is just to leave room for the protocol part.
-                if (messageBuffer.length > (MAX_PAYLOAD - 1024)) {
+                if (messageBuffer.length > (maxPayload - 1024)) {
                     const length = current.Documents.length;
                     if (length > 1) {
                         const mid = length / 2;
@@ -85,7 +84,7 @@ export class DocumentManager extends EventEmitter {
                         this.emit("warning", "Document list too large, splitting");
                     } else {
                         const doc = current.Documents[0];
-                        doc.Text = truncateString(doc.Text, MAX_PAYLOAD / 2);
+                        doc.Text = truncateString(doc.Text, maxPayload / 2);
                         updates.push({
                             Space: current.Space,
                             Documents: [doc],
