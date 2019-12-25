@@ -1,39 +1,31 @@
-import {EventEmitter} from "events";
+import { EventEmitter } from "events";
 
-import { Client, connect, Payload, Subscription } from "ts-nats";
+import { Client, Subscription } from "ts-nats";
 
 import { Monitor } from "./monitor";
+import { connect, NATSOptions } from "./natshelper";
 import { IndexStatus, SearchRequest, SearchResponse } from "./protocol";
 
 // A Letarette Search Agent
 export class SearchAgent extends EventEmitter {
     private client: Client | null = null;
     private readonly monitor: Monitor;
-    private readonly url: string;
-    private readonly topic: string;
+    private readonly URLs: string[];
+    private readonly options: NATSOptions;
     private numShards = 0;
 
-    public constructor(url: string, topic: string = "leta", shardGroupSize?: number) {
+    public constructor(URLs: string[], options: NATSOptions = {topic: "leta"}) {
         super();
-        this.url = url;
-        this.topic = topic;
-        if (shardGroupSize) {
-            this.numShards = shardGroupSize;
-        }
-        this.monitor = new Monitor(url, topic);
+        this.URLs = URLs;
+        this.options = options;
+        this.monitor = new Monitor(URLs, options);
         this.monitor.on("status", (status: IndexStatus) => {
             this.numShards = status.ShardgroupSize;
         });
     }
 
     public async connect() {
-        this.client = await connect({
-            payload: Payload.JSON,
-            url: this.url,
-            reconnect: true,
-            reconnectTimeWait: 500,
-            maxReconnectAttempts: -1,
-        });
+        this.client = await connect(this.URLs, this.options);
 
         if (this.numShards === 0) {
             await this.monitor.connect();
@@ -84,7 +76,7 @@ export class SearchAgent extends EventEmitter {
                 }
             }, {max: shards});
             subscription.unsubscribe(shards);
-            this.client!.publish(this.topic + ".q", req, inbox);
+            this.client!.publish(this.options.topic + ".q", req, inbox);
         });
 
         const result = await request;

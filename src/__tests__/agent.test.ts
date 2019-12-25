@@ -1,4 +1,4 @@
-import {mergeResponses} from "../client";
+import {mergeResponses} from "../agent";
 import {SearchResponse, SearchStatusCode} from "../protocol";
 
 describe("Search result merging", () => {

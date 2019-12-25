@@ -1,4 +1,4 @@
 export * from "./protocol";
-export * from "./client";
+export * from "./agent";
 export * from "./monitor";
 export * from "./docmanager";

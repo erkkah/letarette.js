@@ -6,7 +6,8 @@ import {
     searchStatusCodeToString,
 } from "letarette";
 
-const searchAgent = new SearchAgent("nats://localhost:4222");
+const searchAgent = new SearchAgent(["nats://localhost:4222"]);
+
 searchAgent.on("error", (err) => {
     console.log(err);
 });

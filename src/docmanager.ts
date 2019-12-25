@@ -1,6 +1,8 @@
 import {EventEmitter} from "events";
 
-import {Client, connect, Payload} from "ts-nats";
+import {Client} from "ts-nats";
+
+import {connect, NATSOptions} from "./natshelper";
 import {DocumentRequest, DocumentUpdate, IndexUpdate, IndexUpdateRequest} from "./protocol";
 
 // IndexRequestHandler processes index update requests from the letarette cluster
@@ -16,23 +18,17 @@ const MAX_PAYLOAD = 1000 * 1000;
 // DocumentManager connects to the letarette cluster and processes indexing requests
 export class DocumentManager extends EventEmitter {
     private client: Client | null = null;
-    private url: string;
-    private topic: string;
+    private readonly URLs: string[];
+    private readonly options: NATSOptions;
 
-    public constructor(url: string, topic: string = "leta") {
+    public constructor(URLs: string[], options: NATSOptions = {topic: "leta"}) {
         super();
-        this.url = url;
-        this.topic = topic;
+        this.URLs = URLs;
+        this.options = options;
     }
 
     public async connect() {
-        this.client = await connect({
-            payload: Payload.JSON,
-            url: this.url,
-            reconnect: true,
-            reconnectTimeWait: 500,
-            maxReconnectAttempts: -1,
-        });
+        this.client = await connect(this.URLs, this.options);
     }
 
     public close() {
@@ -47,7 +43,7 @@ export class DocumentManager extends EventEmitter {
         }
 
         return this.client.subscribe(
-            this.topic + ".index.request",
+            this.options.topic + ".index.request",
             (err, msg) => {
                 const req: IndexUpdateRequest = msg.data;
                 const reply = msg.reply!;
@@ -97,12 +93,12 @@ export class DocumentManager extends EventEmitter {
                         this.emit("warning", `Document ${doc.ID} too large, truncating`);
                     }
                 } else {
-                    this.client!.publish(this.topic + ".document.update", current);
+                    this.client!.publish(this.options.topic + ".document.update", current);
                 }
             }
         };
 
-        return this.client.subscribe(this.topic + ".document.request",
+        return this.client.subscribe(this.options.topic + ".document.request",
             (err, msg) => {
                 handle(msg.data);
             },

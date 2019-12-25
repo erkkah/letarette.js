@@ -25,7 +25,7 @@ index = index.sort((a, b) => {
     );
 });
 
-const mgr = new DocumentManager("nats://localhost:4222");
+const mgr = new DocumentManager(["nats://localhost:4222"]);
 mgr.connect().then(() => {
     mgr.startIndexRequestHandler(handleIndexRequest);
     mgr.startDocumentRequestHandler(handleDocumentRequest);
