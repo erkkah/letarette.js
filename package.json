@@ -1,7 +1,15 @@
 {
-  "name": "letarette",
+  "name": "@letarette/letarette",
   "version": "0.1.0",
   "description": "Letarette javascript / typescript client",
+  "keywords": [
+    "letarette",
+    "typescript",
+    "search",
+    "client"
+  ],
+  "author": "Erik Agsjö",
+  "license": "ISC",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
@@ -12,14 +20,6 @@
     "build": "tsc",
     "lint": "tslint -p tsconfig.json"
   },
-  "keywords": [
-    "letarette",
-    "typescript",
-    "search",
-    "client"
-  ],
-  "author": "Erik Agsjö",
-  "license": "ISC",
   "devDependencies": {
     "@types/jest": "^24.0.23",
     "@types/node": "^12.12.7",
