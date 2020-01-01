@@ -1,6 +1,10 @@
 {
   "name": "@letarette/letarette",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erkkah/letarette.js"
+  },
   "description": "Letarette javascript / typescript client",
   "keywords": [
     "letarette",
