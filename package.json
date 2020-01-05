@@ -1,9 +1,12 @@
 {
-  "name": "@letarette/letarette",
-  "version": "0.1.0",
+  "name": "@letarette/client",
+  "version": "0.1.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/erkkah/letarette.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "description": "Letarette javascript / typescript client",
   "keywords": [

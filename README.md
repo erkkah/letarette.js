@@ -4,4 +4,8 @@ A Typescript client library implementation for integrating the [Letarette](https
 
 Provides Search Agent and Document Manager for performing searches on, and providing documents to, a Letarette search index.
 
-See the [example](example) for details.
+```
+npm i @letarette/client
+```
+
+See the [example](https://github.com/erkkah/letarette.js/tree/master/example) for details.
