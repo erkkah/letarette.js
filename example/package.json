@@ -8,8 +8,8 @@
     "letarette": "file:.."
   },
   "devDependencies": {
-    "@types/node": "^12.12.8",
+    "@types/node": "^12.12.30",
     "tslint": "^5.20.1",
-    "typescript": "^3.7.2"
+    "typescript": "^3.8.3"
   }
 }
