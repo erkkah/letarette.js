@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.2] - 2020-03-16
+### Changes
+- Security updates
+
 ## [0.1.1] - 2020-01-05
 ### Changes
 - Package rename
