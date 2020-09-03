@@ -23,6 +23,28 @@ directory and run `npm install` to install the newly built library.
 The example requires a NATS server and a Letarette server up and running.
 The NATS server is expected to run on the local machine (nats://localhost:4222).
 
+For this example, both the NATS server and the letarette server can be started with no setup.
+They both log to stdout, so need to run in separate shells: 
+
+```shell
+$ nats-server
+[14214] 2020/09/03 22:28:11.890364 [INF] Starting nats-server version 2.1.6
+[14214] 2020/09/03 22:28:11.890506 [INF] Git commit [not set]
+[14214] 2020/09/03 22:28:11.912002 [INF] Listening for client connections on 0.0.0.0:4222
+[14214] 2020/09/03 22:28:11.912025 [INF] Server id is NDNKHCE44J7I3EABXTNNXCOE37U7G3FAX3DDQSWR7SS5FK6UYF4J4C6Z
+[14214] 2020/09/03 22:28:11.912034 [INF] Server is ready
+```
+
+```shell
+$ letarette
+[INFO] 2020/09/03 22:28:56 Starting Letarette 2020-09-02 (dev)
+[INFO] 2020/09/03 22:28:56 Connecting to nats server at ["nats://localhost:4222"]
+[INFO] 2020/09/03 22:28:56 Applying migrations
+[INFO] 2020/09/03 22:28:56 Pre-loading database start
+[INFO] 2020/09/03 22:28:56 Pre-loading database done
+[INFO] 2020/09/03 22:28:56 Index@882C8D754AF775E16236A4B79095E825
+```
+
 Launch the document server first, using `npx ts-node docserver.ts`. This will start to feed the Letarette index with "365 Luncheon Dishes".
 
 Next, launch the search client using `npx ts-node search.ts` and type in your best lunch-related queries.
