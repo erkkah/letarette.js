@@ -4,7 +4,7 @@ import {
     SearchAgent,
     SearchResponse,
     searchStatusCodeToString,
-} from "letarette";
+} from "@letarette/client";
 
 const searchAgent = new SearchAgent(["nats://localhost:4222"]);
 

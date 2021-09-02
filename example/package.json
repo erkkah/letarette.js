@@ -5,7 +5,7 @@
   "author": "Erik Agsjö",
   "license": "ISC",
   "dependencies": {
-    "letarette": "file:.."
+    "@letarette/client": "file:.."
   },
   "devDependencies": {
     "@types/node": "^12.12.30",

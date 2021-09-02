@@ -9,7 +9,7 @@ import {
     DocumentUpdate,
     IndexUpdate,
     IndexUpdateRequest,
-} from "letarette";
+} from "@letarette/client";
 
 const recipies = loadRecipies("pg24384.txt");
 let index = Object.keys(recipies);
