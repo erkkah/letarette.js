@@ -43,10 +43,13 @@ export class SearchAgent extends EventEmitter {
             throw new Error("Must be connected");
         }
 
+        const numShards = await this.getNumShards();
+        const shardedLimit = Math.max(1, Math.trunc(pageLimit / numShards));
+
         const req: SearchRequest = {
             Query: query,
             Spaces: spaces,
-            PageLimit: pageLimit,
+            PageLimit: shardedLimit,
             PageOffset: pageOffset,
             Autocorrect: false,
         };
@@ -61,7 +64,6 @@ export class SearchAgent extends EventEmitter {
                 reject("Timeout waiting for search response");
             }, 2000);
 
-            const shards = await this.getNumShards();
             const inbox = this.client!.createInbox();
             const responses: SearchResponse[] = [];
             subscription = await this.client!.subscribe(inbox, (err, msg) => {
@@ -70,12 +72,12 @@ export class SearchAgent extends EventEmitter {
                 }
                 const res: SearchResponse = msg.data;
                 responses.push(res);
-                if (responses.length === shards) {
+                if (responses.length === numShards) {
                     clearTimeout(timeout);
                     resolve(responses);
                 }
-            }, {max: shards});
-            subscription.unsubscribe(shards);
+            }, {max: numShards});
+            subscription.unsubscribe(numShards);
             this.client!.publish(this.options.topic + ".q", req, inbox);
         });
 
