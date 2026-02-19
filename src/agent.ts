@@ -4,7 +4,7 @@ import { Client, Subscription } from "ts-nats";
 
 import { Monitor } from "./monitor";
 import { connect, NATSOptions } from "./natshelper";
-import { IndexStatus, SearchRequest, SearchResponse } from "./protocol";
+import { IndexStatus, SearchRequest, SearchResponse, SearchStatusCode } from "./protocol";
 
 // A Letarette Search Agent
 export class SearchAgent extends EventEmitter {
@@ -117,7 +117,7 @@ export function mergeResponses(responses: SearchResponse[]): SearchResponse {
             Respelt: "",
             RespeltDistance: 0.0,
         },
-        Status: 0,
+        Status: SearchStatusCode.NoHit,
         Duration: 0,
     };
 
